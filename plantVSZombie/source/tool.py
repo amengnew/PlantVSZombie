@@ -1,10 +1,9 @@
-__author__ = 'marble_xu'
-
 import os
 import json
 from abc import abstractmethod
 import pygame as pg
 from . import constants as c
+
 
 class State():
     def __init__(self):
@@ -13,7 +12,7 @@ class State():
         self.done = False
         self.next = None
         self.persist = {}
-    
+
     @abstractmethod
     def startup(self, current_time, persist):
         '''abstract method'''
@@ -21,15 +20,16 @@ class State():
     def cleanup(self):
         self.done = False
         return self.persist
-    
+
     @abstractmethod
     def update(self, surface, keys, current_time):
         '''abstract method'''
 
+
 class Control():
     def __init__(self):
-        self.screen = pg.display.get_surface()      # 当前的窗口屏幕显示
-        self.done = False       # 游戏结束
+        self.screen = pg.display.get_surface()  # 当前的窗口屏幕显示
+        self.done = False  # 游戏结束
         self.clock = pg.time.Clock()
         self.fps = 60
         self.keys = pg.key.get_pressed()
@@ -39,17 +39,17 @@ class Control():
         self.state_dict = {}
         self.state_name = None
         self.state = None
-        self.game_info = {c.CURRENT_TIME:0.0,
-                          c.LEVEL_NUM:c.START_LEVEL_NUM}
- 
-    def setup_states(self, state_dict, start_state):    # 建立当前界面状态，例如菜单，胜利界面等
+        self.game_info = {c.CURRENT_TIME: 0.0,
+                          c.LEVEL_NUM: c.START_LEVEL_NUM}
+
+    def setup_states(self, state_dict, start_state):  # 建立当前界面状态，例如菜单，胜利界面等
         self.state_dict = state_dict
         self.state_name = start_state
         self.state = self.state_dict[self.state_name]
         self.state.startup(self.current_time, self.game_info)
 
     def update(self):
-        self.current_time = pg.time.get_ticks()     # 获取时间
+        self.current_time = pg.time.get_ticks()  # 获取时间
         if self.state.done:
             self.flip_state()
         self.state.update(self.screen, self.current_time, self.mouse_pos, self.mouse_click)
@@ -65,7 +65,7 @@ class Control():
 
     def event_loop(self):
         for event in pg.event.get():
-            if event.type == pg.QUIT:       # 关闭按钮
+            if event.type == pg.QUIT:  # 关闭按钮
                 self.done = True
             elif event.type == pg.KEYDOWN:
                 self.keys = pg.key.get_pressed()
@@ -79,27 +79,29 @@ class Control():
     def main(self):
         while not self.done:
             self.event_loop()  # 鼠标键盘以及退出事件循环判断
-            self.update()   # 更新信息，包括屏幕信息、时间、鼠标信息
-            pg.display.update()     # 更新屏幕
-            self.clock.tick(self.fps)   # 控制速度
+            self.update()  # 更新信息，包括屏幕信息、时间、鼠标信息
+            pg.display.update()  # 更新屏幕
+            self.clock.tick(self.fps)  # 控制速度
         print('game over')
 
-def get_image(sheet, x, y, width, height, colorkey=c.BLACK, scale=1):
-        image = pg.Surface([width, height])
-        rect = image.get_rect()
 
-        image.blit(sheet, (0, 0), (x, y, width, height))
-        image.set_colorkey(colorkey)
-        image = pg.transform.scale(image,
-                                   (int(rect.width*scale),
-                                    int(rect.height*scale)))
-        return image
+def get_image(sheet, x, y, width, height, colorkey=c.WHITE, scale=1):
+    image = pg.Surface([width, height])
+    rect = image.get_rect()
+
+    image.blit(sheet, (0, 0), (x, y, width, height))
+    image.set_colorkey(colorkey)
+    image = pg.transform.scale(image,
+                               (int(rect.width * scale),
+                                int(rect.height * scale)))
+    return image
+
 
 def load_image_frames(directory, image_name, colorkey, accept):
     frame_list = []
     tmp = {}
     # image_name is "Peashooter", pic name is 'Peashooter_1', get the index 1
-    index_start = len(image_name) + 1 
+    index_start = len(image_name) + 1
     frame_num = 0;
     for pic in os.listdir(directory):
         name, ext = os.path.splitext(pic)
@@ -111,14 +113,15 @@ def load_image_frames(directory, image_name, colorkey, accept):
             else:
                 img = img.convert()
                 img.set_colorkey(colorkey)
-            tmp[index]= img
+            tmp[index] = img
             frame_num += 1
 
     for i in range(frame_num):
         frame_list.append(tmp[i])
     return frame_list
 
-def load_all_gfx(directory, colorkey=c.BLACK, accept=('.png', '.jpg', '.bmp', '.gif')):
+
+def load_all_gfx(directory, colorkey=c.WHITE, accept=('.png', '.jpg', '.bmp', '.gif')):
     graphics = {}
     for name1 in os.listdir(directory):
         # subfolders under the folder resources\graphics
@@ -127,7 +130,7 @@ def load_all_gfx(directory, colorkey=c.BLACK, accept=('.png', '.jpg', '.bmp', '.
             for name2 in os.listdir(dir1):
                 dir2 = os.path.join(dir1, name2)
                 if os.path.isdir(dir2):
-                # e.g. subfolders under the folder resources\graphics\Zombies
+                    # e.g. subfolders under the folder resources\graphics\Zombies
                     for name3 in os.listdir(dir2):
                         dir3 = os.path.join(dir2, name3)
                         # e.g. subfolders or pics under the folder resources\graphics\Zombies\ConeheadZombie
@@ -141,7 +144,7 @@ def load_all_gfx(directory, colorkey=c.BLACK, accept=('.png', '.jpg', '.bmp', '.
                             graphics[image_name] = load_image_frames(dir2, image_name, colorkey, accept)
                             break
                 else:
-                # e.g. pics under the folder resources\graphics\Screen
+                    # e.g. pics under the folder resources\graphics\Screen
                     name, ext = os.path.splitext(name2)
                     if ext.lower() in accept:
                         img = pg.image.load(dir2)
@@ -153,24 +156,27 @@ def load_all_gfx(directory, colorkey=c.BLACK, accept=('.png', '.jpg', '.bmp', '.
                         graphics[name] = img
     return graphics
 
-def loadZombieImageRect():
-    file_path = os.path.join('source', 'data', 'entity', 'zombie.json')
-    f = open(file_path)
-    data = json.load(f)
-    f.close()
-    return data[c.ZOMBIE_IMAGE_RECT]
 
-def loadPlantImageRect():
-    file_path = os.path.join('source', 'data', 'entity', 'plant.json')
-    f = open(file_path)
-    data = json.load(f)
-    f.close()
-    return data[c.PLANT_IMAGE_RECT]
+# def loadZombieImageRect():
+#     file_path = os.path.join('source', 'data', 'entity', 'zombie.json')
+#     f = open(file_path)
+#     data = json.load(f)
+#     f.close()
+#     return data[c.ZOMBIE_IMAGE_RECT]
+
+
+# def loadPlantImageRect():
+#     file_path = os.path.join('source', 'data', 'entity', 'plant.json')
+#     f = open(file_path)
+#     data = json.load(f)
+#     f.close()
+#     return data[c.PLANT_IMAGE_RECT]
+
 
 pg.init()
 pg.display.set_caption(c.ORIGINAL_CAPTION)
 SCREEN = pg.display.set_mode(c.SCREEN_SIZE)
 
-GFX = load_all_gfx(os.path.join("resources","graphics"))
-ZOMBIE_RECT = loadZombieImageRect()
-PLANT_RECT = loadPlantImageRect()
+GFX = load_all_gfx(os.path.join("resource"))
+# ZOMBIE_RECT = loadZombieImageRect()
+# PLANT_RECT = loadPlantImageRect()
